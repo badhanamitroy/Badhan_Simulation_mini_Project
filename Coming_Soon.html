@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}
+body{
+  background:radial-gradient(circle at top right,#2a2d35 0%,#171920 100%);
+  color:#fff;min-height:100vh;display:flex;justify-content:center;
+  align-items:center;overflow:hidden;
+}
+.container{
+  width:100%;max-width:1200px;min-height:90vh;position:relative;
+  display:flex;flex-direction:column;padding:28px 44px;
+}
+header{display:flex;justify-content:space-between;align-items:flex-start;width:100%;}
+.logo-circle{
+  background:#0d0f13;width:62px;height:62px;border-radius:50%;
+  display:flex;justify-content:center;align-items:center;
+  font-size:28px;box-shadow:0 4px 14px rgba(0,0,0,0.4);
+  flex-shrink:0;
+}
+.app-links{display:flex;flex-direction:column;gap:12px;}
+.app-links img{width:140px;cursor:pointer;transition:transform .2s;}
+.app-links img:hover{transform:scale(1.05);}
+main{
+  display:flex;justify-content:space-between;align-items:center;
+  flex-grow:1;margin-top:-40px;gap:24px;
+}
+.text-content{max-width:520px;}
+.text-content h1{
+  color:#ffb703;font-size:clamp(2.8rem,5vw,4.5rem);
+  font-weight:700;margin-bottom:6px;
+}
+.text-content h2{
+  font-size:clamp(1.8rem,3vw,2.8rem);font-weight:600;
+  margin-bottom:18px;line-height:1.2;
+}
+.text-content p{
+  color:#9ba0aa;font-size:1.05rem;line-height:1.65;
+  margin-bottom:38px;max-width:440px;
+}
+.read-more-btn{
+  background:#ff2a4a;color:#fff;border:none;padding:16px 42px;
+  font-size:1.05rem;border-radius:30px;cursor:pointer;font-weight:600;
+  box-shadow:0 6px 20px rgba(255,42,74,0.45);transition:background .25s,transform .2s;
+}
+.read-more-btn:hover{background:#e02540;transform:translateY(-2px);}
+.graphic-content{
+  flex-shrink:0;width:clamp(280px,40%,500px);
+  display:flex;justify-content:flex-end;align-items:center;
+}
+.graphic-content img{
+  width:100%;height:auto;
+  filter:drop-shadow(0 24px 36px rgba(0,0,0,0.55));
+}
+.qr-code-wrapper{
+  position:absolute;bottom:36px;left:44px;
+  background:#fff;padding:8px;border-radius:10px;
+  display:flex;justify-content:center;align-items:center;
+  box-shadow:0 4px 14px rgba(0,0,0,0.35);
+}
+.qr-code-wrapper img{width:72px;height:72px;display:block;}
+@media(max-width:800px){
+  .container{padding:22px 20px;}
+  main{flex-direction:column;text-align:center;margin-top:24px;}
+  .text-content p{margin:0 auto 28px;}
+  .text-content{max-width:100%;}
+  .graphic-content{width:80%;max-width:340px;justify-content:center;}
+  .qr-code-wrapper{bottom:16px;left:16px;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+
+  <main>
+    <div class="text-content">
+      <h1>Coming soon...</h1>
+      <h2>Website is under<br/>construction</h2>
+      <p>We're working hard to bring you something great. Our site is currently under maintenance and will be back online shortly. Thank you for your patience.</p>
+    </div>
+
+    <div class="graphic-content">
+      <img src="https://digitalupgrow.com/wp-content/uploads/2021/09/MAINTENANCE.png" alt="Under Maintenance"/>
+    </div>
+  </main>
+
+
+</div>
+</body>
+</html>

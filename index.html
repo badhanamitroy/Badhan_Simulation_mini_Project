@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulation Dashboard</title>
+
+<style>
+/* ===============================
+   🎯 DESIGN SYSTEM
+================================ */
+:root {
+    --bg: #f8fafc;
+    --bg-soft: #eef2ff;
+    --text: #0f172a;
+
+    --card: rgba(255,255,255,0.6);
+    --card-solid: #ffffff;
+
+    --border: rgba(0,0,0,0.06);
+    --border-strong: rgba(0,0,0,0.12);
+
+    --primary: #4f46e5;
+    --primary-soft: rgba(79,70,229,0.15);
+
+    --shadow: 0 10px 30px rgba(0,0,0,0.08);
+    --glow: 0 0 0px rgba(79,70,229,0);
+
+    --glass: blur(16px);
+}
+
+[data-theme="dark"] {
+    --bg: #020617;
+    --bg-soft: #0f172a;
+    --text: #e2e8f0;
+
+    --card: rgba(15,23,42,0.55);
+    --card-solid: #020617;
+
+    --border: rgba(255,255,255,0.06);
+    --border-strong: rgba(255,255,255,0.12);
+
+    --primary: #818cf8;
+    --primary-soft: rgba(129,140,248,0.2);
+
+    --shadow: 0 10px 40px rgba(0,0,0,0.5);
+    --glow: 0 0 0px rgba(129,140,248,0);
+
+    --glass: blur(18px);
+}
+
+/* ===============================
+   BASE
+================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui;
+    min-height: 100vh;
+    color: var(--text);
+    transition: 0.4s;
+
+    background:
+        radial-gradient(circle at 15% 20%, var(--primary-soft), transparent 35%),
+        radial-gradient(circle at 85% 80%, var(--primary-soft), transparent 40%),
+        radial-gradient(circle at 50% 100%, rgba(99,102,241,0.15), transparent 50%),
+        var(--bg);
+}
+
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    filter: blur(120px);
+    z-index: -1;
+    opacity: 0.6;
+    transition: 0.5s;
+}
+
+/* top glow */
+body::before {
+    top: -100px;
+    left: -100px;
+    background: var(--primary);
+}
+
+/* bottom glow */
+body::after {
+    bottom: -120px;
+    right: -120px;
+    background: var(--secondary);
+}
+
+/* Dark mode tuning */
+[data-theme="dark"] body::before {
+    opacity: 0.4;
+}
+[data-theme="dark"] body::after {
+    opacity: 0.3;
+}
+
+/* ===============================
+   NAVBAR
+================================ */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+}
+
+.logo {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.toggle {
+    width: 70px;
+    height: 34px;
+    border-radius: 50px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    backdrop-filter: var(--glass);
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px;
+
+    cursor: pointer;
+    position: relative;
+}
+
+/* icons */
+.toggle span {
+    font-size: 16px;
+    z-index: 1;
+    transition: 0.3s;
+}
+
+/* moving knob */
+.toggle::before {
+    content: "";
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--primary);
+    top: 3px;
+    left: 4px;
+    transition: 0.3s ease;
+}
+
+/* active = dark */
+.toggle.active::before {
+    transform: translateX(34px);
+}
+
+/* icon emphasis */
+.toggle .sun {
+    opacity: 1;
+}
+.toggle .moon {
+    opacity: 0.4;
+}
+
+.toggle.active .sun {
+    opacity: 0.4;
+}
+.toggle.active .moon {
+    opacity: 1;
+}
+
+/* ===============================
+   HERO
+================================ */
+.hero {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.hero p {
+    opacity: 0.7;
+}
+
+/* ===============================
+   GRID
+================================ */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 25px;
+    padding: 40px;
+}
+
+/* ===============================
+   CARD
+================================ */
+.card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 26px;
+    border-radius: 18px;
+
+    text-decoration: none;
+    color: var(--text);
+
+    background: var(--card);
+    backdrop-filter: var(--glass);
+
+    border: 1px solid var(--border);
+
+    box-shadow: var(--shadow);
+
+    position: relative;
+    overflow: hidden;
+
+    transition: all 0.35s ease;
+}
+
+/* subtle gradient edge */
+.card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent, var(--primary-soft), transparent);
+    opacity: 0;
+    transition: 0.4s;
+}
+
+/* inner highlight (top edge lighting) */
+.card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-strong);
+}
+
+/* hover = light interaction, not just movement */
+.card:hover {
+    transform: translateY(-6px);
+    border-color: var(--primary);
+    box-shadow:
+        0 12px 40px rgba(0,0,0,0.2),
+        0 0 20px var(--primary-soft);
+}
+
+.card:hover::before {
+    opacity: 1;
+}
+
+/* content */
+.card-content h3 {
+    margin-bottom: 6px;
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.card-content p {
+    font-size: 0.85rem;
+    opacity: 0.65;
+}
+
+/* arrow refinement */
+.arrow {
+    font-size: 1.3rem;
+    opacity: 0.4;
+    transition: 0.3s;
+}
+
+.card:hover .arrow {
+    transform: translateX(8px);
+    opacity: 1;
+    color: var(--primary);
+}
+
+/* ===============================
+   FOOTER
+================================ */
+.footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<div class="navbar">
+    <div class="logo">⚙️ Simulation Lab</div>
+    <div class="toggle" id="themeToggle">
+        <span class="sun">☀️</span>
+        <span class="moon">🌕</span>
+    </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+    <h1>Badhan Simulation Dashboard</h1>
+    <p>Explore operations research & system modeling experiments</p>
+</div>
+
+<!-- GRID -->
+<div class="grid">
+
+    <a href="single_server.html" class="card">
+        <div class="card-content">
+            <h3>Single Server</h3>
+            <p>Queue simulation (Grocery system)</p>
+        </div>
+        <span class="arrow">→</span>
+    </a>
+
+    <!-- <a href="able_baker.html" class="card"> -->
+    <a href="Coming_Soon.html" class="card">
+        <div class="card-content">
+            <h3>Multiple Server</h3>
+            <p>Able-Baker queue model</p>
+        </div>
+        <span class="arrow">→</span>
+    </a>
+
+    <a href="newspaper.html" class="card">
+        <div class="card-content">
+            <h3>Inventory System</h3>
+            <p>Newspaper demand model</p>
+        </div>
+        <span class="arrow">→</span>
+    </a>
+
+    <a href="Coming_Soon.html" class="card">
+        <div class="card-content">
+            <h3>Monte Carlo</h3>
+            <p>Random simulation engine</p>
+        </div>
+        <span class="arrow">→</span>
+    </a>
+
+    <a href="Coming_Soon.html" class="card">
+        <div class="card-content">
+            <h3>Poisson Model</h3>
+            <p>Arrival distribution analysis</p>
+        </div>
+        <span class="arrow">→</span>
+    </a>
+
+</div>
+
+<div class="footer">
+    Built for experimentation • CSE Simulation Systems
+</div>
+
+<script>
+// ===============================
+// 🌗 THEME SYSTEM (CLEAN VERSION)
+// ===============================
+const root = document.documentElement;
+const toggle = document.getElementById("themeToggle");
+
+function applyTheme(theme) {
+    root.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+    toggle.classList.toggle("active", theme === "dark");
+}
+
+function getSystemTheme() {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+}
+
+// Init
+const saved = localStorage.getItem("theme");
+applyTheme(saved || getSystemTheme());
+
+// Toggle
+toggle.addEventListener("click", () => {
+    const current = root.getAttribute("data-theme");
+    applyTheme(current === "dark" ? "light" : "dark");
+});
+
+// ===============================
+// CARD INTERACTION
+// ===============================
+document.querySelectorAll(".card").forEach((card, i) => {
+    card.addEventListener("click", () => {
+        const title = card.querySelector("h3").innerText;
+    });
+});
+</script>
+
+</body>
+</html>

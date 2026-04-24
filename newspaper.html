@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<style>
+:root{
+  --bg:#f8fafc;--bg-soft:#eef2ff;--text:#0f172a;
+  --card:rgba(255,255,255,0.6);--card-solid:#ffffff;
+  --border:rgba(0,0,0,0.06);--border-strong:rgba(0,0,0,0.12);
+  --primary:#4f46e5;--primary-soft:rgba(79,70,229,0.15);
+  --shadow:0 10px 30px rgba(0,0,0,0.08);--glass:blur(16px);
+  --muted:#64748b;--surface:#ffffff;
+  --text-soft:#475569;--text-muted:#94a3b8;
+  --line:#e2e8f0;--secondary:#6366f1;
+}
+[data-theme="dark"]{
+  --bg:#020617;--bg-soft:#0f172a;--text:#e2e8f0;
+  --card:rgba(15,23,42,0.55);--card-solid:#020617;
+  --border:rgba(255,255,255,0.06);--border-strong:rgba(255,255,255,0.12);
+  --primary:#818cf8;--primary-soft:rgba(129,140,248,0.2);
+  --shadow:0 10px 40px rgba(0,0,0,0.5);--glass:blur(18px);
+  --muted:#94a3b8;--surface:#0f172a;
+  --text-soft:#94a3b8;--text-muted:#475569;
+  --line:#1e293b;--secondary:#818cf8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:system-ui;min-height:100vh;color:var(--text);transition:0.4s;
+  background:radial-gradient(circle at 15% 20%,var(--primary-soft),transparent 35%),
+    radial-gradient(circle at 85% 80%,var(--primary-soft),transparent 40%),
+    radial-gradient(circle at 50% 100%,rgba(99,102,241,0.15),transparent 50%),var(--bg);
+}
+body::before,body::after{
+  content:"";position:fixed;width:400px;height:400px;
+  border-radius:50%;filter:blur(120px);z-index:-1;opacity:0.5;
+}
+body::before{top:-100px;left:-100px;background:var(--primary);}
+body::after{bottom:-120px;right:-120px;background:var(--secondary);}
+[data-theme="dark"] body::before{opacity:0.4;}
+[data-theme="dark"] body::after{opacity:0.3;}
+.wrap{max-width:1220px;margin:0 auto;padding:26px 16px 44px;}
+header{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between;margin-bottom:18px;}
+.titleRow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+h1{margin:0;font-size:22px;letter-spacing:-.02em;color:var(--text);}
+.subtitle{margin-top:6px;color:var(--muted);font-size:13px;line-height:1.35;max-width:720px;}
+.top-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.btn{
+  border:1px solid var(--border);background:var(--card);backdrop-filter:var(--glass);
+  padding:10px 14px;border-radius:12px;cursor:pointer;
+  font-weight:700;font-size:13px;color:var(--text);transition:0.25s;
+}
+.btn:hover{transform:translateY(-2px);border-color:var(--primary);}
+.btn.primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border:none;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.bulk-bar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  background:var(--card);backdrop-filter:var(--glass);
+  border:1px solid var(--border);border-radius:14px;
+  padding:12px 14px;margin-bottom:16px;
+}
+.bulk-bar label{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;}
+.bulk-bar input[type=number]{
+  width:90px;padding:8px 10px;border-radius:10px;
+  border:1px solid var(--border-strong);background:var(--surface);
+  color:var(--text);font-size:13px;font-weight:700;outline:none;transition:0.2s;
+}
+.bulk-bar input[type=number]:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+.bulk-bar .hint{font-size:12px;color:var(--muted);}
+.err{font-size:12px;color:#ef4444;font-weight:700;}
+.toggle{
+  width:70px;height:34px;border-radius:50px;
+  background:var(--card);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 6px;cursor:pointer;position:relative;
+}
+.toggle span{font-size:16px;z-index:1;}
+.toggle::before{
+  content:"";position:absolute;width:26px;height:26px;
+  border-radius:50%;background:var(--primary);top:3px;left:4px;transition:0.3s;
+}
+.toggle.active::before{transform:translateX(34px);}
+.toggle .moon{opacity:0.4;}
+.toggle.active .sun{opacity:0.4;}
+.toggle.active .moon{opacity:1;}
+.grid{display:grid;grid-template-columns:1fr;gap:16px;}
+@media(min-width:980px){.grid{grid-template-columns:360px 1fr;}}
+.card{
+  background:var(--card);backdrop-filter:var(--glass);
+  border:1px solid var(--border);border-radius:18px;
+  box-shadow:var(--shadow);overflow:hidden;transition:0.3s;
+  position:relative;padding:16px;
+}
+.card::before{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(120deg,transparent,var(--primary-soft),transparent);
+  opacity:0;transition:0.4s;pointer-events:none;
+}
+.card:hover{transform:translateY(-4px);border-color:var(--primary);box-shadow:0 15px 40px rgba(0,0,0,0.2);}
+.card:hover::before{opacity:0.2;}
+.kpiGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.kpiCard{
+  border:1px solid var(--border);border-radius:18px;
+  background:var(--surface);padding:14px;
+  box-shadow:0 10px 22px rgba(2,6,23,.05);
+}
+.kpiLabel{font-size:12px;color:var(--text-muted);font-weight:900;}
+.kpiValue{margin-top:8px;font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--text);}
+.kpiHint{margin-top:6px;font-size:12px;color:var(--text-soft);}
+.tabs{display:flex;gap:8px;margin-bottom:12px;}
+.tab{
+  padding:10px 12px;border-radius:14px;border:1px solid var(--border);
+  background:var(--card);cursor:pointer;font-weight:700;font-size:13px;color:var(--text-soft);
+}
+.tab.active{background:var(--bg-soft);border-color:var(--primary);color:var(--text);}
+.tablewrap{border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:0 10px 24px rgba(2,6,23,.05);overflow:visible;}
+.scroll{
+  max-height:380px;overflow-y:auto;overflow-x:auto;border-radius:16px;
+  scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent;
+}
+.scroll::-webkit-scrollbar{width:6px;height:6px;}
+.scroll::-webkit-scrollbar-track{background:transparent;}
+.scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px;}
+.scroll::-webkit-scrollbar-thumb:hover{background:var(--border-strong);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{
+  position:sticky;top:0;z-index:2;background:var(--surface);
+  text-align:left;padding:12px 10px;border-bottom:1px solid var(--border);
+  font-size:12px;color:var(--text-soft);white-space:nowrap;
+}
+thead th:first-child{border-radius:16px 0 0 0;}
+thead th:last-child{border-radius:0 16px 0 0;}
+tbody td{padding:11px 10px;border-bottom:1px solid var(--border);white-space:nowrap;color:var(--text);}
+tbody tr:last-child td{border-bottom:none;}
+.tag{
+  display:inline-flex;align-items:center;padding:6px 10px;
+  border-radius:999px;font-size:12px;font-weight:700;
+  border:1px solid var(--border);background:var(--bg-soft);color:var(--text);
+}
+.tag.good{background:rgba(22,163,74,.10);border-color:rgba(22,163,74,.25);color:#14532d;}
+.tag.fair{background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.30);color:#7c2d12;}
+.tag.poor{background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.25);color:#7f1d1d;}
+.profit-pos{color:#16a34a;font-weight:700;}
+.profit-neg{color:#dc2626;font-weight:700;}
+.bar{margin-top:10px;height:12px;background:#eef2ff;border-radius:999px;border:1px solid #e5e7eb;overflow:hidden;}
+.bar>div{height:100%;width:0%;border-radius:999px;transition:width .25s ease;}
+.bar.rev>div{background:linear-gradient(90deg,#4f46e5,#6366f1);}
+.bar.profit>div{background:linear-gradient(90deg,rgba(22,163,74,.95),rgba(21,128,61,.95));}
+.muted{color:var(--muted);}
+.empty-state{padding:28px 10px;text-align:center;}
+.empty-state .etitle{font-weight:700;color:var(--text);}
+.empty-state .ehint{margin-top:6px;color:var(--muted);font-size:13px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <div class="titleRow">
+      <h1>📰 News Dealer Simulation LAB</h1>
+    </div>
+    <div class="subtitle">
+      Run one day at a time or bulk-simulate N days instantly. Prices entered in cents (¢) — all outputs displayed in USD ($).
+    </div>
+  </div>
+  <div class="toggle" id="themeToggle">
+    <span class="sun">☀️</span>
+    <span class="moon">🌕</span>
+  </div>
+  <div class="top-actions">
+    <button class="btn primary" id="addBtn">+ Simulate 1 Day</button>
+    <button class="btn" id="exportCsv" disabled>Export CSV</button>
+    <button class="btn" id="downloadSummary" disabled>Download Summary .txt</button>
+    <button class="btn" id="resetBtn" disabled>Reset</button>
+  </div>
+</header>
+
+<div class="bulk-bar">
+  <label for="buyInput">Buy (¢)</label>
+  <input type="number" id="buyInput" placeholder="e.g. 33" style="width:80px"/>
+  <label for="sellInput">Sell (¢)</label>
+  <input type="number" id="sellInput" placeholder="e.g. 50" style="width:80px"/>
+  <label for="scrapInput">Scrap (¢)</label>
+  <input type="number" id="scrapInput" placeholder="e.g. 5" style="width:80px"/>
+  <label for="stockInput">Stock</label>
+  <input type="number" id="stockInput" placeholder="e.g. 70" style="width:80px"/>
+  <label for="bulkInput">Days:</label>
+  <input type="number" id="bulkInput" min="1" max="500" placeholder="e.g. 10"/>
+  <button class="btn primary" id="bulkBtn">Run N Days</button>
+  <span class="hint">Enter parameters above and click Run to simulate multiple days at once.</span>
+  <span class="err" id="bulkErr"></span>
+</div>
+
+<div class="grid">
+
+  <!-- LEFT: KPIs -->
+  <div class="card">
+    <div class="kpiGrid">
+      <div class="kpiCard">
+        <div class="kpiLabel">Days Simulated</div>
+        <div class="kpiValue" id="kDays">0</div>
+        <div class="kpiHint">Total days run (N).</div>
+      </div>
+      <div class="kpiCard">
+        <div class="kpiLabel">Total Revenue</div>
+        <div class="kpiValue" id="kRev">$0.00</div>
+        <div class="kpiHint">Bundles sold × sell price.</div>
+      </div>
+      <div class="kpiCard">
+        <div class="kpiLabel">Total Cost</div>
+        <div class="kpiValue" id="kCost">$0.00</div>
+        <div class="kpiHint">Stock × buy price per day.</div>
+      </div>
+      <div class="kpiCard">
+        <div class="kpiLabel">Net Profit</div>
+        <div class="kpiValue" id="kProfit">$0.00</div>
+        <div class="kpiHint">Revenue + Salvage − Cost.</div>
+      </div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="kpiCard" style="padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div style="font-weight:700;color:var(--text)">Total Salvage</div>
+        <span class="tag" id="tSalvage">$0.00</span>
+      </div>
+      <div class="muted" style="font-size:12px;margin-top:4px">Leftover bundles × scrap price</div>
+      <div class="bar rev"><div id="bRev"></div></div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="kpiCard" style="padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div style="font-weight:700;color:var(--text)">Lost Profit (opportunity)</div>
+        <span class="tag" id="tLost">$0.00</span>
+      </div>
+      <div class="muted" style="font-size:12px;margin-top:4px">Shortage × (sell − buy), not a cash loss</div>
+      <div class="bar profit"><div id="bProfit"></div></div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="kpiCard" style="padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div style="font-weight:700;color:var(--text)">Avg Daily Demand</div>
+        <span class="tag" id="tDemand">0</span>
+      </div>
+      <div class="muted" style="font-size:12px;margin-top:4px">Average demand across all simulated days</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Table -->
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="tabTable">Daily results</button>
+      <button class="tab" id="tabRules">Rules</button>
+    </div>
+    <div id="panelTable">
+      <div class="tablewrap">
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Day</th><th>RD-News</th><th>Newsday</th><th>RD-Dem</th>
+                <th>Demand</th><th>Sold</th><th>Leftover</th>
+                <th>Revenue ($)</th><th>Salvage ($)</th><th>Cost ($)</th>
+                <th>Profit ($)</th><th>Lost ($)</th>
+              </tr>
+            </thead>
+            <tbody id="tbody">
+              <tr><td colspan="12">
+                <div class="empty-state">
+                  <div class="etitle">No days simulated yet</div>
+                  <div class="ehint">Fill in the parameters above and click "+ Simulate 1 Day" or "Run N Days".</div>
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="muted" style="font-size:12px;margin-top:10px;text-align:center">
+        RD-News: 1–35 → Good, 36–80 → Fair, 81–100 → Poor. All monetary outputs in USD ($).
+      </div>
+    </div>
+    <div id="panelRules" style="display:none">
+      <div class="kpiCard">
+        <div style="font-weight:700;margin-bottom:8px;color:var(--text)">Demand mappings by newsday type</div>
+        <div class="muted" style="font-size:13px;line-height:1.7">
+          <b>Newsday (RD-News 1–100)</b>: 1–35 → Good, 36–80 → Fair, 81–100 → Poor.<br/><br/>
+          <b>Good day demand (RD-Demand)</b>: 1–3→40, 4–8→50, 9–23→60, 24–43→70, 44–78→80, 79–93→90, 94–100→100.<br/><br/>
+          <b>Fair day demand</b>: 1–10→40, 11–28→50, 29–68→60, 69–88→70, 89–96→80, 97–100→90.<br/><br/>
+          <b>Poor day demand</b>: 1–44→40, 45–66→50, 67–82→60, 83–94→70, 95–100→80.<br/><br/>
+          <b>Profit formula</b>: Revenue + Salvage − Cost. Lost profit is an opportunity cost only (not subtracted from profit).<br/>
+          <b>Prices</b>: entered in cents (¢), displayed in USD ($) by dividing by 100.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+const root=document.documentElement;
+const toggle=document.getElementById("themeToggle");
+function applyTheme(t){
+  root.setAttribute("data-theme",t);
+  localStorage.setItem("theme",t);
+  toggle.classList.toggle("active",t==="dark");
+}
+applyTheme(localStorage.getItem("theme")||(window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"));
+toggle.addEventListener("click",()=>applyTheme(root.getAttribute("data-theme")==="dark"?"light":"dark"));
+
+const rows=[];
+
+function getParams(){
+  return{
+    buy:   parseFloat(document.getElementById("buyInput").value)||0,
+    sell:  parseFloat(document.getElementById("sellInput").value)||0,
+    scrap: parseFloat(document.getElementById("scrapInput").value)||0,
+    stock: parseInt(document.getElementById("stockInput").value)||0,
+  };
+}
+
+function mapNewsday(rd){ return rd<=35?"Good":rd<=80?"Fair":"Poor"; }
+
+function mapDemand(newsday,rd){
+  if(newsday==="Good"){
+    if(rd<=3)return 40;if(rd<=8)return 50;if(rd<=23)return 60;
+    if(rd<=43)return 70;if(rd<=78)return 80;if(rd<=93)return 90;return 100;
+  }else if(newsday==="Fair"){
+    if(rd<=10)return 40;if(rd<=28)return 50;if(rd<=68)return 60;
+    if(rd<=88)return 70;if(rd<=96)return 80;return 90;
+  }else{
+    if(rd<=44)return 40;if(rd<=66)return 50;if(rd<=82)return 60;
+    if(rd<=94)return 70;return 80;
+  }
+}
+
+function simDay(p){
+  const rd_news  = Math.floor(Math.random()*100)+1;
+  const rd_dem   = Math.floor(Math.random()*100)+1;
+  const newsday  = mapNewsday(rd_news);
+  const demand   = mapDemand(newsday,rd_dem);
+  const sold     = Math.min(demand,p.stock);
+  const leftover = Math.max(p.stock-demand,0);
+  const shortage = Math.max(demand-p.stock,0);
+  const revC     = sold*p.sell;
+  const salvC    = leftover*p.scrap;
+  const costC    = p.stock*p.buy;
+  const profC    = revC+salvC-costC;
+  const lostC    = shortage*(p.sell-p.buy);
+  return{rd_news,newsday,rd_dem,demand,sold,leftover,revC,salvC,costC,profC,lostC};
+}
+
+function computeSummary(){
+  const N=rows.length;
+  const totRev =rows.reduce((a,r)=>a+r.revC,0);
+  const totCost=rows.reduce((a,r)=>a+r.costC,0);
+  const totSalv=rows.reduce((a,r)=>a+r.salvC,0);
+  const totProf=rows.reduce((a,r)=>a+r.profC,0);
+  const totLost=rows.reduce((a,r)=>a+r.lostC,0);
+  const totDem =rows.reduce((a,r)=>a+r.demand,0);
+  return{N,totRev,totCost,totSalv,totProf,totLost,avgDem:N?totDem/N:0};
+}
+
+function makeSummaryText(s){
+  return[
+    "=== News Dealer Simulation Summary ===",
+    `Total days simulated     : ${s.N}`,
+    `Total revenue            : $${(s.totRev/100).toFixed(2)}`,
+    `Total cost               : $${(s.totCost/100).toFixed(2)}`,
+    `Total salvage            : $${(s.totSalv/100).toFixed(2)}`,
+    `Net profit               : $${(s.totProf/100).toFixed(2)}`,
+    `Lost profit (opp. cost)  : $${(s.totLost/100).toFixed(2)}`,
+    `Avg daily demand         : ${s.avgDem.toFixed(2)}`,
+  ].join("\n");
+}
+
+function toCSV(){
+  const h=["Day","RD-News","Newsday","RD-Demand","Demand","Sold","Leftover","Revenue($)","Salvage($)","Cost($)","Profit($)","LostProfit($)"];
+  const lines=[h.join(",")];
+  rows.forEach((r,i)=>lines.push([
+    i+1,r.rd_news,r.newsday,r.rd_dem,r.demand,r.sold,r.leftover,
+    (r.revC/100).toFixed(2),(r.salvC/100).toFixed(2),(r.costC/100).toFixed(2),
+    (r.profC/100).toFixed(2),(r.lostC/100).toFixed(2)
+  ].join(",")));
+  return lines.join("\n");
+}
+
+function downloadText(fn,txt,mime="text/plain;charset=utf-8"){
+  const b=new Blob([txt],{type:mime});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement("a");
+  a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);
+}
+
+function usd(c){return"$"+(c/100).toFixed(2);}
+
+function renderTable(){
+  const tbody=document.getElementById("tbody");
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td colspan="12"><div class="empty-state"><div class="etitle">No days simulated yet</div><div class="ehint">Fill in the parameters above and click "+ Simulate 1 Day" or "Run N Days".</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML="";
+  rows.forEach((r,i)=>{
+    const ndTag=`<span class="tag ${r.newsday.toLowerCase()}">${r.newsday}</span>`;
+    const pc=r.profC>=0?"profit-pos":"profit-neg";
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><b>${i+1}</b></td><td>${r.rd_news}</td><td>${ndTag}</td><td>${r.rd_dem}</td>`
+      +`<td>${r.demand}</td><td>${r.sold}</td><td>${r.leftover}</td>`
+      +`<td>${usd(r.revC)}</td><td>${usd(r.salvC)}</td><td>${usd(r.costC)}</td>`
+      +`<td class="${pc}">${usd(r.profC)}</td><td>${usd(r.lostC)}</td>`;
+    tbody.appendChild(tr);
+  });
+  const s=document.querySelector(".scroll");
+  s.scrollTop=s.scrollHeight;
+}
+
+function renderDashboard(){
+  const s=computeSummary();
+  const hasRows=rows.length>0;
+  document.getElementById("resetBtn").disabled=!hasRows;
+  document.getElementById("exportCsv").disabled=!hasRows;
+  document.getElementById("downloadSummary").disabled=!hasRows;
+  document.getElementById("kDays").textContent=s.N;
+  document.getElementById("kRev").textContent=usd(s.totRev);
+  document.getElementById("kCost").textContent=usd(s.totCost);
+  document.getElementById("kProfit").textContent=usd(s.totProf);
+  document.getElementById("kProfit").className="kpiValue "+(s.totProf>=0?"profit-pos":"profit-neg");
+  document.getElementById("tSalvage").textContent=usd(s.totSalv);
+  document.getElementById("tLost").textContent=usd(s.totLost);
+  document.getElementById("tDemand").textContent=s.avgDem.toFixed(1);
+  const revPct=s.totCost>0?Math.min(100,(s.totRev/s.totCost)*100):0;
+  const profPct=Math.max(0,Math.min(100,s.totProf>0?Math.min(100,(s.totProf/(s.totRev||1))*100):0));
+  document.getElementById("bRev").style.width=revPct+"%";
+  document.getElementById("bProfit").style.width=profPct+"%";
+}
+
+function renderAll(){renderTable();renderDashboard();}
+
+document.getElementById("addBtn").addEventListener("click",()=>{
+  const p=getParams();
+  if(!p.sell||!p.stock){document.getElementById("bulkErr").textContent="Set sell price and stock first.";return;}
+  document.getElementById("bulkErr").textContent="";
+  rows.push(simDay(p));renderAll();
+});
+
+document.getElementById("bulkBtn").addEventListener("click",()=>{
+  const errEl=document.getElementById("bulkErr");
+  errEl.textContent="";
+  const p=getParams();
+  if(!p.sell||!p.stock){errEl.textContent="Set sell price and stock first.";return;}
+  const val=parseInt(document.getElementById("bulkInput").value,10);
+  if(isNaN(val)||val<1){errEl.textContent="Please enter a number ≥ 1.";return;}
+  if(val>500){errEl.textContent="Max 500 at a time.";return;}
+  for(let i=0;i<val;i++)rows.push(simDay(p));
+  renderAll();
+});
+
+document.getElementById("bulkInput").addEventListener("keydown",e=>{
+  if(e.key==="Enter")document.getElementById("bulkBtn").click();
+});
+
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(!confirm("Reset all simulated days?"))return;
+  rows.length=0;document.getElementById("bulkErr").textContent="";renderAll();
+});
+
+document.getElementById("exportCsv").addEventListener("click",()=>downloadText("news_dealer_simulation.csv",toCSV(),"text/csv;charset=utf-8"));
+document.getElementById("downloadSummary").addEventListener("click",()=>downloadText("news_dealer_summary.txt",makeSummaryText(computeSummary())));
+
+document.getElementById("tabTable").addEventListener("click",()=>{
+  document.getElementById("tabTable").classList.add("active");
+  document.getElementById("tabRules").classList.remove("active");
+  document.getElementById("panelTable").style.display="";
+  document.getElementById("panelRules").style.display="none";
+});
+document.getElementById("tabRules").addEventListener("click",()=>{
+  document.getElementById("tabRules").classList.add("active");
+  document.getElementById("tabTable").classList.remove("active");
+  document.getElementById("panelRules").style.display="";
+  document.getElementById("panelTable").style.display="none";
+});
+
+renderAll();
+</script>
+</body>
+</html>

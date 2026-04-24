@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulation LAB 1 — Single Server Queue</title>
+  <style>
+    :root {
+        --bg: #f8fafc; --bg-soft: #eef2ff; --text: #0f172a;
+        --card: rgba(255,255,255,0.6); --card-solid: #ffffff;
+        --border: rgba(0,0,0,0.06); --border-strong: rgba(0,0,0,0.12);
+        --primary: #4f46e5; --primary-soft: rgba(79,70,229,0.15);
+        --shadow: 0 10px 30px rgba(0,0,0,0.08); --glass: blur(16px);
+        --muted: #64748b; --surface: #ffffff;
+        --text-soft: #475569; --text-muted: #94a3b8;
+        --line: #e2e8f0; --secondary: #6366f1;
+    }
+    [data-theme="dark"] {
+        --bg: #020617; --bg-soft: #0f172a; --text: #e2e8f0;
+        --card: rgba(15,23,42,0.55); --card-solid: #020617;
+        --border: rgba(255,255,255,0.06); --border-strong: rgba(255,255,255,0.12);
+        --primary: #818cf8; --primary-soft: rgba(129,140,248,0.2);
+        --shadow: 0 10px 40px rgba(0,0,0,0.5); --glass: blur(18px);
+        --muted: #94a3b8; --surface: #0f172a;
+        --text-soft: #94a3b8; --text-muted: #475569;
+        --line: #1e293b; --secondary: #818cf8;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+        font-family: system-ui; min-height:100vh; color:var(--text); transition:0.4s;
+        background: radial-gradient(circle at 15% 20%, var(--primary-soft), transparent 35%),
+            radial-gradient(circle at 85% 80%, var(--primary-soft), transparent 40%),
+            radial-gradient(circle at 50% 100%, rgba(99,102,241,0.15), transparent 50%), var(--bg);
+    }
+    body::before, body::after {
+        content:""; position:fixed; width:400px; height:400px;
+        border-radius:50%; filter:blur(120px); z-index:-1; opacity:0.5;
+    }
+    body::before { top:-100px; left:-100px; background:var(--primary); }
+    body::after { bottom:-120px; right:-120px; background:var(--secondary); }
+    [data-theme="dark"] body::before { opacity:0.4; }
+    [data-theme="dark"] body::after { opacity:0.3; }
+    .wrap { max-width:1220px; margin:0 auto; padding:26px 16px 44px; }
+    header { display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; justify-content:space-between; margin-bottom:18px; }
+    .titleRow { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    h1 { margin:0; font-size:22px; letter-spacing:-.02em; color:var(--text); }
+    .subtitle { margin-top:6px; color:var(--muted); font-size:13px; line-height:1.35; max-width:720px; }
+    .top-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    .btn {
+        border:1px solid var(--border); background:var(--card); backdrop-filter:var(--glass);
+        padding:10px 14px; border-radius:12px; cursor:pointer;
+        font-weight:700; font-size:13px; color:var(--text); transition:0.25s;
+    }
+    .btn:hover { transform:translateY(-2px); border-color:var(--primary); }
+    .btn.primary { background:linear-gradient(135deg,var(--primary),var(--secondary)); color:white; }
+    .btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+
+    .bulk-bar {
+        display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+        background:var(--card); backdrop-filter:var(--glass);
+        border:1px solid var(--border); border-radius:14px;
+        padding:12px 14px; margin-bottom:16px;
+    }
+    .bulk-bar label { font-size:13px; font-weight:700; color:var(--text); white-space:nowrap; }
+    .bulk-bar input[type=number] {
+        width:90px; padding:8px 10px; border-radius:10px;
+        border:1px solid var(--border-strong); background:var(--surface);
+        color:var(--text); font-size:13px; font-weight:700;
+        outline:none; transition:0.2s;
+    }
+    .bulk-bar input[type=number]:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft); }
+    .bulk-bar .hint { font-size:12px; color:var(--muted); }
+    .err { font-size:12px; color:#ef4444; font-weight:700; }
+
+    .toggle {
+        width:70px; height:34px; border-radius:50px;
+        background:var(--card); border:1px solid var(--border);
+        display:flex; align-items:center; justify-content:space-between;
+        padding:0 6px; cursor:pointer; position:relative;
+    }
+    .toggle span { font-size:16px; z-index:1; }
+    .toggle::before {
+        content:""; position:absolute; width:26px; height:26px;
+        border-radius:50%; background:var(--primary); top:3px; left:4px; transition:0.3s;
+    }
+    .toggle.active::before { transform:translateX(34px); }
+    .toggle .moon { opacity:0.4; }
+    .toggle.active .sun { opacity:0.4; }
+    .toggle.active .moon { opacity:1; }
+    .grid { display:grid; grid-template-columns:1fr; gap:16px; }
+    @media(min-width:980px){ .grid { grid-template-columns:360px 1fr; } }
+    .card {
+        background:var(--card); backdrop-filter:var(--glass);
+        border:1px solid var(--border); border-radius:18px;
+        box-shadow:var(--shadow); overflow:hidden; transition:0.3s;
+        position:relative; padding:16px;
+    }
+    .card::before {
+        content:""; position:absolute; inset:0;
+        background:linear-gradient(120deg,transparent,var(--primary-soft),transparent);
+        opacity:0; transition:0.4s; pointer-events:none;
+    }
+    .card:hover { transform:translateY(-4px); border-color:var(--primary); box-shadow:0 15px 40px rgba(0,0,0,0.2); }
+    .card:hover::before { opacity:0.2; }
+    .kpiGrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .kpiCard {
+        border:1px solid var(--border); border-radius:18px;
+        background:var(--surface); padding:14px;
+        box-shadow:0 10px 22px rgba(2,6,23,.05);
+    }
+    .kpiLabel { font-size:12px; color:var(--text-muted); font-weight:900; }
+    .kpiValue { margin-top:8px; font-size:22px; font-weight:1000; letter-spacing:-.02em; color:var(--text); }
+    .kpiHint { margin-top:6px; font-size:12px; color:var(--text-soft); }
+    .tabs { display:flex; gap:8px; margin-bottom:12px; }
+    .tab {
+        padding:10px 12px; border-radius:14px; border:1px solid var(--border);
+        background:var(--card); cursor:pointer; font-weight:1000; font-size:13px; color:var(--text-soft);
+    }
+    .tab.active { background:var(--bg-soft); border-color:var(--primary); color:var(--text); }
+    .tablewrap { border:1px solid var(--border); border-radius:16px; background:var(--surface); box-shadow:0 10px 24px rgba(2,6,23,.05); overflow:visible; }
+    .scroll {
+        max-height:380px; overflow-y:auto; overflow-x:auto; border-radius:16px;
+        scrollbar-width:thin; scrollbar-color:var(--border-strong) transparent;
+    }
+    .scroll::-webkit-scrollbar { width:6px; height:6px; }
+    .scroll::-webkit-scrollbar-track { background:transparent; }
+    .scroll::-webkit-scrollbar-thumb { background:var(--border); border-radius:999px; }
+    .scroll::-webkit-scrollbar-thumb:hover { background:var(--border-strong); }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    thead th {
+        position:sticky; top:0; z-index:2; background:var(--surface);
+        text-align:left; padding:12px 10px; border-bottom:1px solid var(--border);
+        font-size:12px; color:var(--text-soft); white-space:nowrap;
+    }
+    thead th:first-child { border-radius:16px 0 0 0; }
+    thead th:last-child { border-radius:0 16px 0 0; }
+    tbody td { padding:11px 10px; border-bottom:1px solid var(--border); white-space:nowrap; color:var(--text); }
+    tbody tr:last-child td { border-bottom:none; }
+    .wt-warn {
+        display:inline-block; padding:5px 10px; border-radius:999px;
+        border:1px solid rgba(245,158,11,.35);
+        background:rgba(245,158,11,.10); color:#92400e; font-weight:1000;
+    }
+    .bar { margin-top:10px; height:12px; background:#eef2ff; border-radius:999px; border:1px solid #e5e7eb; overflow:hidden; }
+    .bar > div { height:100%; width:0%; border-radius:999px; transition:width .25s ease; }
+    .bar.wait > div { background:linear-gradient(90deg,rgba(245,158,11,.95),rgba(217,119,6,.95)); }
+    .bar.idle > div { background:linear-gradient(90deg,rgba(22,163,74,.95),rgba(21,128,61,.95)); }
+    .tag {
+        display:inline-flex; align-items:center; padding:6px 10px;
+        border-radius:999px; font-size:12px; font-weight:1000;
+        border:1px solid var(--border); background:var(--bg-soft); color:var(--text);
+    }
+    .tag.ok { background:rgba(22,163,74,.10); border-color:rgba(22,163,74,.25); color:#14532d; }
+    .tag.warn { background:rgba(245,158,11,.10); border-color:rgba(245,158,11,.30); color:#7c2d12; }
+    .muted { color:var(--muted); }
+    .empty-state { padding:28px 10px; text-align:center; }
+    .empty-state .etitle { font-weight:1000; color:var(--text); }
+    .empty-state .ehint { margin-top:6px; color:var(--muted); font-size:13px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="titleRow">
+        <h1>Single-Server Queue</h1>
+      </div>
+      <div class="subtitle">
+        Add one customer at a time, or bulk-generate N customers instantly using the input below.
+      </div>
+    </div>
+    <div class="toggle" id="themeToggle">
+      <span class="sun">☀️</span>
+      <span class="moon">🌕</span>
+    </div>
+    <div class="top-actions">
+      <button class="btn primary" id="addBtn">+ Add 1 Customer</button>
+      <button class="btn" id="exportCsv" disabled>Export CSV</button>
+      <button class="btn" id="downloadSummary" disabled>Download Summary .txt</button>
+      <button class="btn" id="resetBtn" disabled>Reset</button>
+    </div>
+  </header>
+
+  <div class="bulk-bar">
+    <label for="bulkInput">Bulk generate:</label>
+    <input type="number" id="bulkInput" min="1" max="500" placeholder="e.g. 10" />
+    <button class="btn primary" id="bulkBtn">Run N Customers</button>
+    <span class="hint">Enter a number (1–500) and click Run to simulate that many customers at once.</span>
+    <span class="err" id="bulkErr"></span>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="kpiGrid">
+        <div class="kpiCard">
+          <div class="kpiLabel">Customers</div>
+          <div class="kpiValue" id="kCustomers">0</div>
+          <div class="kpiHint">Total customers (N).</div>
+        </div>
+        <div class="kpiCard">
+          <div class="kpiLabel">Run time</div>
+          <div class="kpiValue" id="kRun">0</div>
+          <div class="kpiHint">Last TSE (Total run time).</div>
+        </div>
+        <div class="kpiCard">
+          <div class="kpiLabel">Avg waiting time</div>
+          <div class="kpiValue" id="kAvgWait">0.000</div>
+          <div class="kpiHint">(Total wait / N).</div>
+        </div>
+        <div class="kpiCard">
+          <div class="kpiLabel">Avg time in system</div>
+          <div class="kpiValue" id="kAvgSys">0.000</div>
+          <div class="kpiHint">(Total TSS / N).</div>
+        </div>
+      </div>
+      <div style="height:12px"></div>
+      <div class="kpiCard" style="padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <div style="font-weight:1000;color:var(--text)">Probability customer waits</div>
+          <span class="tag" id="tWait">0.0%</span>
+        </div>
+        <div class="muted" style="font-size:12px;margin-top:4px">(Customers who wait / N)</div>
+        <div class="bar wait"><div id="bWait"></div></div>
+      </div>
+      <div style="height:12px"></div>
+      <div class="kpiCard" style="padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <div style="font-weight:1000;color:var(--text)">Probability server idle</div>
+          <span class="tag" id="tIdle">0.0%</span>
+        </div>
+        <div class="muted" style="font-size:12px;margin-top:4px">(Total idle / Total run time)</div>
+        <div class="bar idle"><div id="bIdle"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" id="tabTable">Customer table</button>
+        <button class="tab" id="tabRules">Rules</button>
+      </div>
+      <div id="panelTable">
+        <div class="tablewrap">
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>CSL</th><th>RAT</th><th>IAT</th><th>AT</th><th>RST</th><th>ST</th>
+                  <th>TSB</th><th>WT</th><th>TSE</th><th>TSS</th><th>ITS</th>
+                </tr>
+              </thead>
+              <tbody id="tbody">
+                <tr><td colspan="11">
+                  <div class="empty-state">
+                    <div class="etitle">No customers yet</div>
+                    <div class="ehint">Use "+ Add 1 Customer" or bulk generate above.</div>
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="muted" style="font-size:12px;margin-top:10px;text-align:center">
+          RAT is "-" for Customer 1. RAT: auto 1–1000 → IAT. RST: auto 1–100 → ST.
+        </div>
+      </div>
+      <div id="panelRules" style="display:none">
+        <div class="kpiCard">
+          <div style="font-weight:1000;margin-bottom:8px;color:var(--text)">Mappings (same as C++ code)</div>
+          <div class="muted" style="font-size:13px;line-height:1.55">
+            <b>RAT (1–1000) → IAT</b>: 1–125→1, 126–250→2, 251–375→3, 376–500→4, 501–625→5, 626–750→6, 751–875→7, 876–1000→8.<br/><br/>
+            <b>RST (1–100) → ST</b>: 1–10→1, 11–30→2, 31–60→3, 61–85→4, 86–95→5, 96–100→6.<br/><br/>
+            <b>AT</b> cumulative. <b>TSB</b>=AT (first), else max(AT, prev TSE). <b>WT</b>=TSB−AT. <b>TSE</b>=TSB+ST. <b>TSS</b>=TSE−AT. <b>ITS</b>=AT (first), else max(0, AT−prev TSE).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const root = document.documentElement;
+  const toggle = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    localStorage.setItem("theme", t);
+    toggle.classList.toggle("active", t==="dark");
+  }
+  applyTheme(localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"));
+  toggle.addEventListener("click", ()=>applyTheme(root.getAttribute("data-theme")==="dark"?"light":"dark"));
+
+  const randInt=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  function mapIAT(r){if(r===-1)return 0;if(r<=125)return 1;if(r<=250)return 2;if(r<=375)return 3;if(r<=500)return 4;if(r<=625)return 5;if(r<=750)return 6;if(r<=875)return 7;return 8;}
+  function mapST(r){if(r<=0)return 0;if(r<=10)return 1;if(r<=30)return 2;if(r<=60)return 3;if(r<=85)return 4;if(r<=95)return 5;return 6;}
+
+  const rows=[];
+
+  function addCustomer(){
+    const csl=rows.length+1;
+    const rat=(csl===1)?-1:randInt(1,1000);
+    const rst=randInt(1,100);
+    const iat=(csl===1)?0:mapIAT(rat);
+    const st=mapST(rst);
+    const prev=rows.length?rows[rows.length-1]:null;
+    const prevAT=prev?prev.at:0;
+    const prevTSE=prev?prev.tse:0;
+    const at=prevAT+iat;
+    const tsb=(csl===1)?at:Math.max(at,prevTSE);
+    const wt=tsb-at;
+    const tse=tsb+st;
+    const tss=tse-at;
+    const its=(csl===1)?at:Math.max(0,at-prevTSE);
+    rows.push({csl,rat,ratDisplay:(csl===1)?"-":String(rat),iat,at,rst,st,tsb,wt,tse,tss,its});
+  }
+
+  function computeSummary(){
+    const N=rows.length;
+    const total_wait_time=rows.reduce((a,r)=>a+r.wt,0);
+    const waiters=rows.filter(r=>r.wt>0);
+    const customers_waited=waiters.length;
+    const total_wait_time_waiters=waiters.reduce((a,r)=>a+r.wt,0);
+    const total_idle_time=rows.reduce((a,r)=>a+r.its,0);
+    const total_run_time=N?rows[N-1].tse:0;
+    const total_service_time=rows.reduce((a,r)=>a+r.st,0);
+    const sum_iat=rows.reduce((a,r)=>a+r.iat,0);
+    const total_time_in_system=rows.reduce((a,r)=>a+r.tss,0);
+    const avg_wait_all=N?total_wait_time/N:0;
+    const prob_wait=N?customers_waited/N:0;
+    const prob_idle=total_run_time>0?total_idle_time/total_run_time:0;
+    const avg_service=N?total_service_time/N:0;
+    const denom_arrivals=Math.max(0,N-1);
+    const avg_iat=denom_arrivals>0?sum_iat/denom_arrivals:0;
+    const avg_wait_waiters=customers_waited>0?total_wait_time_waiters/customers_waited:0;
+    const avg_time_in_system=N?total_time_in_system/N:0;
+    return{N,total_wait_time,customers_waited,total_wait_time_waiters,total_idle_time,total_run_time,total_service_time,sum_iat,denom_arrivals,total_time_in_system,avg_wait_all,prob_wait,prob_wait_pct:prob_wait*100,prob_idle,prob_idle_pct:prob_idle*100,avg_service,avg_iat,avg_wait_waiters,avg_time_in_system};
+  }
+
+  function makeConsoleText(s){
+    return[
+      `=== Single Server Queue Summary ===`,
+      `Total customers (N)             : ${s.N}`,
+      `Total wait time                 : ${s.total_wait_time}`,
+      `Customers who waited            : ${s.customers_waited}`,
+      `Total idle time                 : ${s.total_idle_time}`,
+      `Total run time                  : ${s.total_run_time}`,
+      `Avg wait (all)                  : ${s.avg_wait_all.toFixed(4)}`,
+      `Avg wait (waiters only)         : ${s.avg_wait_waiters.toFixed(4)}`,
+      `Avg time in system              : ${s.avg_time_in_system.toFixed(4)}`,
+      `Avg service time                : ${s.avg_service.toFixed(4)}`,
+      `Avg inter-arrival time          : ${s.avg_iat.toFixed(4)}`,
+      `P(customer waits)               : ${s.prob_wait_pct.toFixed(2)}%`,
+      `P(server idle)                  : ${s.prob_idle_pct.toFixed(2)}%`,
+    ].join("\n");
+  }
+
+  function downloadText(fn,txt,mime="text/plain;charset=utf-8"){
+    const b=new Blob([txt],{type:mime});
+    const u=URL.createObjectURL(b);
+    const a=document.createElement("a");
+    a.href=u;a.download=fn;
+    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);
+  }
+
+  function toCSV(){
+    const h=["CSL","RAT","IAT","AT","RST","ST","TSB","WT","TSE","TSS","ITS"];
+    const lines=[h.join(",")];
+    for(const r of rows)lines.push([r.csl,r.ratDisplay,r.iat,r.at,r.rst,r.st,r.tsb,r.wt,r.tse,r.tss,r.its].map(v=>typeof v==="string"?`"${String(v).replaceAll('"','""')}"`:v).join(","));
+    return lines.join("\n");
+  }
+
+  const tbody=document.getElementById("tbody");
+  const kCustomers=document.getElementById("kCustomers");
+  const kRun=document.getElementById("kRun");
+  const kAvgWait=document.getElementById("kAvgWait");
+  const kAvgSys=document.getElementById("kAvgSys");
+  const tWait=document.getElementById("tWait");
+  const tIdle=document.getElementById("tIdle");
+  const bWait=document.getElementById("bWait");
+  const bIdle=document.getElementById("bIdle");
+  const resetBtn=document.getElementById("resetBtn");
+  const exportCsvBtn=document.getElementById("exportCsv");
+  const downloadSummaryBtn=document.getElementById("downloadSummary");
+  const bulkErr=document.getElementById("bulkErr");
+
+  function renderTable(){
+    if(rows.length===0){
+      tbody.innerHTML=`<tr><td colspan="11"><div class="empty-state"><div class="etitle">No customers yet</div><div class="ehint">Use "+ Add 1 Customer" or bulk generate above.</div></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML="";
+    for(const r of rows){
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td><b>${r.csl}</b></td><td>${r.ratDisplay}</td><td>${r.iat}</td><td>${r.at}</td><td>${r.rst}</td><td>${r.st}</td><td>${r.tsb}</td><td>${r.wt>0?`<span class="wt-warn">${r.wt}</span>`:r.wt}</td><td>${r.tse}</td><td>${r.tss}</td><td>${r.its}</td>`;
+      tbody.appendChild(tr);
+    }
+    const s=document.querySelector(".scroll");
+    s.scrollTop=s.scrollHeight;
+  }
+
+  function renderDashboard(){
+    const s=computeSummary();
+    const hasRows=rows.length>0;
+    resetBtn.disabled=!hasRows;
+    exportCsvBtn.disabled=!hasRows;
+    downloadSummaryBtn.disabled=!hasRows;
+    kCustomers.textContent=s.N;
+    kRun.textContent=s.total_run_time;
+    kAvgWait.textContent=s.avg_wait_all.toFixed(3);
+    kAvgSys.textContent=s.avg_time_in_system.toFixed(3);
+    const wp=Math.max(0,Math.min(100,s.prob_wait_pct));
+    const ip=Math.max(0,Math.min(100,s.prob_idle_pct));
+    tWait.textContent=wp.toFixed(1)+"%";
+    tIdle.textContent=ip.toFixed(1)+"%";
+    bWait.style.width=wp+"%";
+    bIdle.style.width=ip+"%";
+  }
+
+  function renderAll(){renderTable();renderDashboard();}
+
+  document.getElementById("addBtn").addEventListener("click",()=>{addCustomer();renderAll();});
+
+  document.getElementById("bulkBtn").addEventListener("click",()=>{
+    bulkErr.textContent="";
+    const val=parseInt(document.getElementById("bulkInput").value,10);
+    if(isNaN(val)||val<1){bulkErr.textContent="Please enter a number ≥ 1.";return;}
+    if(val>500){bulkErr.textContent="Max 500 at a time.";return;}
+    for(let i=0;i<val;i++)addCustomer();
+    renderAll();
+  });
+
+  document.getElementById("bulkInput").addEventListener("keydown",e=>{
+    if(e.key==="Enter")document.getElementById("bulkBtn").click();
+  });
+
+  resetBtn.addEventListener("click",()=>{
+    if(!confirm("Reset all customers?"))return;
+    rows.length=0;bulkErr.textContent="";renderAll();
+  });
+  exportCsvBtn.addEventListener("click",()=>downloadText("simulation_lab_1.csv",toCSV(),"text/csv;charset=utf-8"));
+  downloadSummaryBtn.addEventListener("click",()=>downloadText("server_summary.txt",makeConsoleText(computeSummary())));
+
+  document.getElementById("tabTable").addEventListener("click",()=>{
+    document.getElementById("tabTable").classList.add("active");
+    document.getElementById("tabRules").classList.remove("active");
+    document.getElementById("panelTable").style.display="";
+    document.getElementById("panelRules").style.display="none";
+  });
+  document.getElementById("tabRules").addEventListener("click",()=>{
+    document.getElementById("tabRules").classList.add("active");
+    document.getElementById("tabTable").classList.remove("active");
+    document.getElementById("panelRules").style.display="";
+    document.getElementById("panelTable").style.display="none";
+  });
+
+  renderAll();
+</script>
+</body>
+</html>
